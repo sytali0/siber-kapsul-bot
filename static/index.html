@@ -462,11 +462,26 @@
       document.getElementById('newsFilters').classList.toggle('hidden', tab !== 'news');
     }
 
+    let isStaticGitHubPages = window.location.hostname.includes('github.io');
+
     async function loadDashboard() {
       const status = document.getElementById('filterStatus').value;
       const category = document.getElementById('filterCategory').value;
-      const res = await fetch(`/api/dashboard?status=${status}&category=${category}`);
-      const data = await res.json();
+      let data = null;
+
+      if (isStaticGitHubPages) {
+        const res = await fetch(`dashboard_data.json?t=${Date.now()}`);
+        data = await res.json();
+        if (status !== 'all') {
+          data.items = data.items.filter(x => x.status === status);
+        }
+        if (category !== 'all') {
+          data.items = data.items.filter(x => x.source_category === category);
+        }
+      } else {
+        const res = await fetch(`/api/dashboard?status=${status}&category=${category}`);
+        data = await res.json();
+      }
       currentData = data;
 
       // İstatistikler
@@ -567,6 +582,11 @@
     }
 
     async function fetchLatestNews() {
+      if (isStaticGitHubPages) {
+        window.open('https://github.com/sytali0/siber-kapsul-bot/actions/workflows/siber_kapsul_oto.yml', '_blank');
+        showToast('GitHub Actions sayfası açıldı! Oradaki "Run workflow" butonuna basarak anında yeni haber paylaşabilirsiniz.');
+        return;
+      }
       const btn = document.getElementById('fetchBtn');
       const spin = document.getElementById('fetchSpinner');
       btn.disabled = true;
@@ -922,6 +942,10 @@
     }
 
     async function checkAuthAndLoad() {
+      if (isStaticGitHubPages) {
+        await loadDashboard();
+        return;
+      }
       try {
         const res = await fetch('/api/auth/status');
         const st = await res.json();

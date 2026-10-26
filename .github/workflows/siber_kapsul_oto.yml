@@ -38,7 +38,9 @@ jobs:
           IG_USERNAME: ${{ secrets.IG_USERNAME }}
           IG_PASSWORD: ${{ secrets.IG_PASSWORD }}
           IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
-        run: python github_action_runner.py
+        run: |
+          python github_action_runner.py
+          python build_gh_pages.py
 
       - name: 🖼️ Üretilen Görselleri GitHub Actions İçine Kaydet
         if: always()
@@ -50,12 +52,10 @@ jobs:
             data/generated/story_*.jpg
           if-no-files-found: ignore
 
-      - name: 💾 Paylaşılan Haber Geçmişini Güncelle (Tekrar Paylaşımı Önler)
+      - name: 💾 Web Sayfasını (GitHub Pages) ve Geçmişi Güncelle
         run: |
-          if [ -f data/published_history.json ]; then
-            git config user.name "Siber Kapsül Bot"
-            git config user.email "bot@siberkapsul.local"
-            git add data/published_history.json
-            git diff --staged --quiet || git commit -m "chore: paylaşılan haber geçmişi güncellendi [skip ci]"
-            git push
-          fi
+          git config user.name "Siber Kapsül Bot"
+          git config user.email "bot@siberkapsul.local"
+          git add data/published_history.json docs/
+          git diff --staged --quiet || git commit -m "chore: web paneli ve paylaşılan haber geçmişi güncellendi [skip ci]"
+          git push
