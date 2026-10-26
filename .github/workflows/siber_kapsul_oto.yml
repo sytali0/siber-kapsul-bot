@@ -1,0 +1,61 @@
+name: 🚀 SİBER KAPSÜL Otomatik Haber & Paylaşım Botu
+
+on:
+  # Her 3 saatte bir otomatik çalışır (İstediğiniz gibi değiştirebilirsiniz)
+  schedule:
+    - cron: '0 */3 * * *'
+
+  # GitHub 'Actions' sekmesinden tek tıkla ("Run workflow" butonuyla) manuel çalıştırma imkanı
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  share-tech-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Proje Kodlarını Çek
+        uses: actions/checkout@v4
+
+      - name: 🔤 Türkçe Fontları Kur
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fonts-dejavu-core fonts-liberation
+
+      - name: 🐍 Python 3.12 Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Kütüphaneleri Yükle
+        run: pip install -r requirements.txt
+
+      - name: 🤖 Haber Çek, Görselleştir ve Instagram'da (Post + Story) Paylaş
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          IG_USERNAME: ${{ secrets.IG_USERNAME }}
+          IG_PASSWORD: ${{ secrets.IG_PASSWORD }}
+          IG_SESSION_JSON: ${{ secrets.IG_SESSION_JSON }}
+        run: python github_action_runner.py
+
+      - name: 🖼️ Üretilen Görselleri GitHub Actions İçine Kaydet
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: uretilen-instagram-gorselleri
+          path: |
+            data/generated/post_*.jpg
+            data/generated/story_*.jpg
+          if-no-files-found: ignore
+
+      - name: 💾 Paylaşılan Haber Geçmişini Güncelle (Tekrar Paylaşımı Önler)
+        run: |
+          if [ -f data/published_history.json ]; then
+            git config user.name "Siber Kapsül Bot"
+            git config user.email "bot@siberkapsul.local"
+            git add data/published_history.json
+            git diff --staged --quiet || git commit -m "chore: paylaşılan haber geçmişi güncellendi [skip ci]"
+            git push
+          fi
