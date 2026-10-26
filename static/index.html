@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="tr" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InstaTech Bot — Otomatik Teknoloji Haber & Instagram Stüdyosu</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #07090e; color: #f1f5f9; }
+    .glass { background: rgba(15, 20, 30, 0.78); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+    .card-hover { transition: all 0.2s ease; }
+    .card-hover:hover { transform: translateY(-2px); border-color: rgba(0, 229, 255, 0.35); }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0b0f19; }
+    ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #334155; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Üst Navigasyon Barı -->
+  <header class="sticky top-0 z-30 glass border-b border-slate-800/80 px-6 py-4">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <svg class="w-6 h-6 text-slate-950" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+            InstaTech Otomasyon
+            <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">v1.0 Pro</span>
+          </h1>
+          <p class="text-xs text-slate-400">Otomatik Teknoloji Haberi Çekme, AI Görselleştirme ve Instagram Paylaşım Sistemi</p>
+        </div>
+      </div>
+
+      <!-- Hızlı Aksiyonlar & Tam Otomatik Mod Şalteri -->
+      <div class="flex items-center gap-3 flex-wrap">
+        <div class="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-slate-900/90 border border-slate-800">
+          <span id="autopilotDot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+          <span class="text-xs font-medium text-slate-300">Tam Otomatik Paylaşım:</span>
+          <button id="autopilotToggleBtn" onclick="toggleAutoPilotQuick()" class="text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+            KAPALI
+          </button>
+        </div>
+
+        <button onclick="openManualModal()" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition flex items-center gap-1.5">
+          <span>+ Özel Haber Oluştur</span>
+        </button>
+
+        <button id="fetchBtn" onclick="fetchLatestNews()" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 transition flex items-center gap-2">
+          <svg id="fetchSpinner" class="w-4 h-4 hidden animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+          </svg>
+          <span>Şimdi Haberleri Çek & Görselleştir</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Ana İçerik -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-6 py-6 space-y-6">
+
+    <!-- İstatistik Kartları -->
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="glass rounded-2xl p-4">
+        <div class="text-xs text-slate-400 font-medium">Havuzdaki Toplam Haber</div>
+        <div id="statTotal" class="text-2xl font-extrabold text-white mt-1">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">Yabancı, Yerli & Reddit</div>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <div class="text-xs text-cyan-400 font-medium">Görseli Hazır (Paylaşıma Hazır)</div>
+        <div id="statReady" class="text-2xl font-extrabold text-cyan-300 mt-1">0</div>
+        <div class="text-[11px] text-slate-500 mt-1">1080x1350 Instagram Kartı</div>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <div class="text-xs text-emerald-400 font-medium">Bugün Paylaşılan / Limit</div>
+        <div class="flex items-baseline gap-1 mt-1">
+          <span id="statPublishedToday" class="text-2xl font-extrabold text-emerald-400">0</span>
+          <span class="text-sm text-slate-500">/ <span id="statDailyLimit">6</span></span>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">Toplam Paylaşılan: <span id="statPublishedTotal">0</span></div>
+      </div>
+      <div class="glass rounded-2xl p-4">
+        <div class="text-xs text-purple-400 font-medium">Zamanlayıcı Durumu</div>
+        <div id="statSchedulerText" class="text-sm font-bold text-slate-200 mt-1.5">Manuel Mod</div>
+        <div id="statSchedulerSub" class="text-[11px] text-slate-500 mt-1">Ayarlardan otomatik modu açabilirsiniz</div>
+      </div>
+    </section>
+
+    <!-- Sekmeler -->
+    <div class="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-3">
+      <div class="flex items-center gap-2">
+        <button onclick="switchTab('news')" id="tabBtn-news" class="px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">
+          Haber Havuzu & Tasarım Stüdyosu
+        </button>
+        <button onclick="switchTab('sources')" id="tabBtn-sources" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white">
+          Haber Kaynakları (RSS & Reddit)
+        </button>
+        <button onclick="switchTab('settings')" id="tabBtn-settings" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white">
+          Marka, AI & Instagram Ayarları
+        </button>
+        <button onclick="switchTab('logs')" id="tabBtn-logs" class="px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white">
+          Canlı Sistem Kayıtları
+        </button>
+      </div>
+
+      <!-- Filtreler (Sadece Haber sekmesinde görünür) -->
+      <div id="newsFilters" class="flex items-center gap-2 flex-wrap">
+        <select id="filterCategory" onchange="loadDashboard()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
+          <option value="all">Tüm Kaynak Türleri</option>
+          <option value="yabanci">🌍 Yabancı Kaynaklar (TechCrunch, Verge...)</option>
+          <option value="yerli">🇹🇷 Yerli Kaynaklar (Webtekno, SDN...)</option>
+          <option value="sosyal">🔥 Reddit / Sosyal Gündem</option>
+        </select>
+        <select id="filterStatus" onchange="loadDashboard()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-cyan-500">
+          <option value="all">Tüm Durumlar</option>
+          <option value="ready">✅ Görseli Hazır Olanlar</option>
+          <option value="pending">⏳ İşlenmeyi Bekleyenler</option>
+          <option value="published">📸 Instagram'da Paylaşılanlar</option>
+          <option value="failed">⚠️ Hata Alanlar</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- SEKME 1: HABER HAVUZU -->
+    <section id="tab-news" class="space-y-4">
+      <div id="newsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+    </section>
+
+    <!-- SEKME 2: HABER KAYNAKLARI -->
+    <section id="tab-sources" class="hidden space-y-6">
+      <div class="glass rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-1">Yeni Haber Kaynağı Ekle</h2>
+        <p class="text-xs text-slate-400 mb-4">Herhangi bir teknoloji sitesinin RSS adresini, Reddit topluluğunu veya X/Nitter RSS beslemesini ekleyebilirsiniz.</p>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <input id="newSrcName" type="text" placeholder="Kaynak Adı (Örn: Wired)" class="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          <select id="newSrcCategory" class="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white">
+            <option value="yabanci">Yabancı Kaynak (Türkçeye Çevrilir)</option>
+            <option value="yerli">Yerli Kaynak (Türkçe)</option>
+            <option value="sosyal">Reddit / X Sosyal Gündem</option>
+          </select>
+          <input id="newSrcUrl" type="text" placeholder="RSS veya Reddit JSON URL" class="bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          <button onclick="addNewSource()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold rounded-xl px-4 py-2 text-xs transition">
+            + Kaynağı Ekle
+          </button>
+        </div>
+      </div>
+
+      <div class="glass rounded-2xl p-6">
+        <h2 class="text-base font-bold text-white mb-4">Kayıtlı Haber Kaynakları</h2>
+        <div id="sourcesList" class="divide-y divide-slate-800/80"></div>
+      </div>
+    </section>
+
+    <!-- SEKME 3: AYARLAR -->
+    <section id="tab-settings" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Marka & Görsel Şablon Ayarları -->
+        <div class="glass rounded-2xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            🎨 Instagram Sayfa & Görsel Şablon Ayarları
+          </h2>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Sayfa Başlığı (Görselin Üst Barında Yazar)</label>
+            <input id="set_brand_name" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Instagram Kullanıcı Adı Etiketi (Görselin Altında Yazar)</label>
+            <input id="set_brand_handle" type="text" placeholder="@teknolojigundemi" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Alt Bilgi (Footer) Çağrı Metni</label>
+            <input id="set_brand_footer_text" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Varsayılan Görsel Şablonu</label>
+              <select id="set_template_style" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white">
+                <option value="modern_gradient">Modern Gradyan (Tam Ekran Fotoğraf)</option>
+                <option value="cyber_frame">Siber Teknoloji Çerçevesi</option>
+                <option value="minimal_magazine">Minimal Dergi Kartı</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Marka Vurgu Rengi (Hex)</label>
+              <div class="flex items-center gap-2">
+                <input id="set_accent_color" type="color" class="w-10 h-9 rounded-lg bg-slate-900 border border-slate-800 cursor-pointer" />
+                <select onchange="document.getElementById('set_accent_color').value=this.value" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-slate-300">
+                  <option value="#00E5FF">Siber Mavi (#00E5FF)</option>
+                  <option value="#FF2E63">Neon Kırmızı/Pembe (#FF2E63)</option>
+                  <option value="#10B981">Zümrüt Yeşili (#10B981)</option>
+                  <option value="#F59E0B">Kehribar Turuncu (#F59E0B)</option>
+                  <option value="#A855F7">Kuantum Mor (#A855F7)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Gemini Yapay Zeka Ayarları -->
+        <div class="glass rounded-2xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            🤖 Google Gemini Yapay Zeka Ayarları
+          </h2>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Google Gemini API Anahtarı (Ücretsiz: aistudio.google.com)</label>
+            <input id="set_gemini_api_key" type="password" placeholder="AIzaSy..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+            <p class="text-[11px] text-slate-500 mt-1">Not: API anahtarı boş bırakılsa bile sistem dahili çeviri ve şablon motoruyla kesintisiz çalışır.</p>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Gemini Modeli</label>
+            <select id="set_gemini_model" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white">
+              <option value="gemini-3-flash-preview">gemini-3-flash-preview (Önerilen - En Güncel & Detaylı)</option>
+              <option value="gemini-3.1-flash-lite-preview">gemini-3.1-flash-lite-preview (Ultra Hızlı)</option>
+              <option value="gemini-flash-latest">gemini-flash-latest</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Haber Yazım Dili & Tonu</label>
+            <input id="set_ai_tone" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Sabit Hashtagler</label>
+            <input id="set_custom_hashtags" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+        </div>
+
+        <!-- Instagram Hesap Bağlantısı -->
+        <div class="glass rounded-2xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            📸 Instagram Doğrudan Giriş Ayarları
+          </h2>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Instagram Kullanıcı Adı</label>
+            <input id="set_ig_username" type="text" placeholder="teknolojigundemi" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Instagram Şifresi</label>
+            <input id="set_ig_password" type="password" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">2 Adımlı Doğrulama Kodu (Sadece 2FA açıksa ilk girişte gerekir)</label>
+            <input id="set_ig_verification_code" type="text" placeholder="Opsiyonel 6 haneli kod" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+          <div class="pt-1 flex items-center gap-3 flex-wrap">
+            <button onclick="saveAllSettings(true)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition">
+              Kaydet & Instagram Girişini Test Et
+            </button>
+            <button onclick="copyCloudSessionJson()" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 text-xs font-semibold transition" title="Bulut sunucularda (Render/Railway) IG_SESSION_JSON değişkenine yapıştırmak için oturum kodunu kopyalar">
+              📋 Bulut Oturum Anahtarını Kopyala
+            </button>
+            <span id="igTestStatus" class="text-xs text-slate-400"></span>
+          </div>
+        </div>
+
+        <!-- Tam Otomatik Zamanlayıcı (Auto-Pilot) -->
+        <div class="glass rounded-2xl p-6 space-y-4">
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            ⏱️ Tam Otomatik Paylaşım Zamanlayıcısı
+          </h2>
+          <div class="flex items-center justify-between p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div>
+              <div class="text-xs font-bold text-white">Tam Otomatik Mod (Auto-Pilot)</div>
+              <div class="text-[11px] text-slate-400">Açık olduğunda haberleri kendi çeker, görselleştirir ve sırayla Instagram'da paylaşır.</div>
+            </div>
+            <input id="set_auto_pilot_enabled" type="checkbox" class="w-5 h-5 accent-cyan-400 cursor-pointer" />
+          </div>
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Haber Tarama Sıklığı (Dk)</label>
+              <input id="set_fetch_interval_minutes" type="number" min="10" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Paylaşım Aralığı (Dk)</label>
+              <input id="set_post_interval_minutes" type="number" min="15" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Günlük Maks. Gönderi</label>
+              <input id="set_max_posts_per_day" type="number" min="1" max="25" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white" />
+            </div>
+          </div>
+          <div class="pt-2">
+            <button onclick="saveAllSettings(false)" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-cyan-500/20 transition">
+              Tüm Ayarları Kaydet
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SEKME 4: SİSTEM LOGLARI -->
+    <section id="tab-logs" class="hidden">
+      <div class="glass rounded-2xl p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-base font-bold text-white">Canlı Sistem Kayıtları</h2>
+          <button onclick="loadDashboard()" class="text-xs text-cyan-400 hover:underline">Yenile</button>
+        </div>
+        <div id="logsContainer" class="space-y-2 max-h-[540px] overflow-y-auto font-mono text-xs"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- TASARIM & ÖNİZLEME STÜDYOSU MODAL -->
+  <div id="studioModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-5xl w-full max-h-[92vh] overflow-y-auto border border-slate-700 p-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+        <div>
+          <h3 class="text-base font-extrabold text-white">Instagram Görsel & İçerik Stüdyosu</h3>
+          <p class="text-xs text-slate-400">Başlığı, şablonu veya rengi değiştirip anında görseli yenileyebilir veya doğrudan paylaşabilirsiniz.</p>
+        </div>
+        <button onclick="closeStudioModal()" class="text-slate-400 hover:text-white text-xl font-bold px-2">✕</button>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Sol: Görsel Önizleme (Post & Story Geçişli) -->
+        <div class="lg:col-span-5 flex flex-col items-center">
+          <div class="flex items-center gap-2 mb-3 w-full max-w-[360px]">
+            <button onclick="switchStudioPreview('post')" id="prevBtnPost" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition">
+              🖼️ Post (4:5)
+            </button>
+            <button onclick="switchStudioPreview('story')" id="prevBtnStory" class="flex-1 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:text-white transition">
+              📱 Story + Link (9:16)
+            </button>
+          </div>
+          <div id="studioPreviewBox" class="w-full max-w-[360px] aspect-[4/5] rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl flex items-center justify-center relative">
+            <img id="studioPreviewImg" src="" alt="Instagram Önizleme" class="w-full h-full object-cover" />
+          </div>
+          <div class="flex items-center gap-3 mt-3 w-full max-w-[360px]">
+            <a id="studioDownloadBtn" href="#" download class="flex-1 text-center py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 border border-slate-700 transition">
+              ⬇ Görseli İndir
+            </a>
+          </div>
+        </div>
+
+        <!-- Sağ: Düzenleme Alanları -->
+        <div class="lg:col-span-7 space-y-3.5">
+          <input type="hidden" id="studioItemId" />
+          <div class="grid grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Kategori Rozeti</label>
+              <input id="studioBadge" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-bold" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Şablon Stili</label>
+              <select id="studioTemplate" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="modern_gradient">Modern Gradyan</option>
+                <option value="cyber_frame">Siber Çerçeve</option>
+                <option value="minimal_magazine">Minimal Dergi</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-slate-400 block mb-1">Vurgu Rengi</label>
+              <select id="studioAccent" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white">
+                <option value="#00E5FF">Siber Mavi</option>
+                <option value="#FF2E63">Neon Kırmızı</option>
+                <option value="#10B981">Zümrüt Yeşili</option>
+                <option value="#F59E0B">Turuncu</option>
+                <option value="#A855F7">Kuantum Mor</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Görsel Üzerindeki Manşet (Büyük Harf Önerilir)</label>
+            <textarea id="studioHeadline" rows="2" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white font-bold"></textarea>
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Görsel Alt Başlığı (1 Cümlelik Özet)</label>
+            <input id="studioSubheadline" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+          </div>
+
+          <div>
+            <label class="text-xs text-slate-400 block mb-1">Arka Plan Haber Fotoğrafı URL (İsterseniz değiştirebilirsiniz)</label>
+            <input id="studioImageUrl" type="text" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-300" />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs text-slate-400">Instagram Açıklama Metni (Caption & Hashtagler)</label>
+              <button onclick="regenerateAIInStudio()" id="aiRegenBtn" class="text-[11px] font-bold text-cyan-400 hover:text-cyan-300 transition">
+                ✨ AI İle Detaylı Yeniden Yaz
+              </button>
+            </div>
+            <textarea id="studioCaption" rows="7" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-slate-200"></textarea>
+          </div>
+
+          <div class="flex items-center gap-2.5 pt-2 flex-wrap">
+            <button onclick="rerenderStudioItem()" id="rerenderBtn" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold text-xs transition">
+              🔄 Görseli & Metni Güncelle
+            </button>
+            <button onclick="publishStoryFromStudio(this)" id="publishStoryBtn" class="px-4 py-2.5 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 font-bold text-xs transition">
+              📱 Sadece Story + Link Paylaş
+            </button>
+            <button onclick="publishFromStudio()" id="publishStudioBtn" class="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 to-teal-500 hover:from-emerald-300 hover:to-teal-400 text-slate-950 font-extrabold text-xs shadow-lg shadow-emerald-500/20 transition">
+              🚀 Post + Story (Linkli) Paylaş
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÖZEL HABER EKLEME MODAL -->
+  <div id="manualModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-lg w-full border border-slate-700 p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-white">Özel Teknoloji Haberi Oluştur</h3>
+        <button onclick="closeManualModal()" class="text-slate-400 hover:text-white">✕</button>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">Haber Başlığı</label>
+        <input id="manTitle" type="text" placeholder="Örn: OpenAI GPT-5 Modelini Resmi Olarak Duyurdu!" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">Haber Detayı / Özeti</label>
+        <textarea id="manSummary" rows="3" placeholder="Haberin detaylarını kısaca yazın..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white"></textarea>
+      </div>
+      <div>
+        <label class="text-xs text-slate-400 block mb-1">Haber Fotoğrafı URL (Boş bırakılırsa siber teknoloji arka planı üretilir)</label>
+        <input id="manImage" type="text" placeholder="https://..." class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white" />
+      </div>
+      <button onclick="submitManualNews()" class="w-full py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs transition">
+        AI İle Hazırla ve Görsel Üret
+      </button>
+    </div>
+  </div>
+
+  <!-- Bildirim Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 hidden px-4 py-3 rounded-xl glass border border-cyan-500/40 text-xs font-semibold text-white shadow-2xl"></div>
+
+  <script>
+    let currentData = { items: [], settings: {}, sources: [], logs: [] };
+
+    let toastTimer = null;
+    function showToast(msg, duration = 6000) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.remove('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.add('hidden'), duration);
+    }
+
+    function switchTab(tab) {
+      ['news', 'sources', 'settings', 'logs'].forEach(t => {
+        document.getElementById('tab-' + t).classList.toggle('hidden', t !== tab);
+        const btn = document.getElementById('tabBtn-' + t);
+        if (t === tab) {
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30';
+        } else {
+          btn.className = 'px-4 py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white';
+        }
+      });
+      document.getElementById('newsFilters').classList.toggle('hidden', tab !== 'news');
+    }
+
+    async function loadDashboard() {
+      const status = document.getElementById('filterStatus').value;
+      const category = document.getElementById('filterCategory').value;
+      const res = await fetch(`/api/dashboard?status=${status}&category=${category}`);
+      const data = await res.json();
+      currentData = data;
+
+      // İstatistikler
+      document.getElementById('statTotal').textContent = data.stats.total;
+      document.getElementById('statReady').textContent = data.stats.ready;
+      document.getElementById('statPublishedToday').textContent = data.stats.published_today;
+      document.getElementById('statPublishedTotal').textContent = data.stats.published;
+      document.getElementById('statDailyLimit').textContent = data.settings.max_posts_per_day || 6;
+
+      // Auto-Pilot Durumu
+      const apOn = data.settings.auto_pilot_enabled;
+      const dot = document.getElementById('autopilotDot');
+      const btn = document.getElementById('autopilotToggleBtn');
+      if (apOn) {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+        btn.className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        btn.textContent = 'AKTİF';
+        document.getElementById('statSchedulerText').textContent = 'Tam Otomatik (Aktif)';
+        document.getElementById('statSchedulerSub').textContent = `Her ${data.settings.post_interval_minutes} dk'da bir paylaşım`;
+      } else {
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+        btn.className = 'text-xs font-bold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400';
+        btn.textContent = 'KAPALI';
+        document.getElementById('statSchedulerText').textContent = 'Yarı-Otomatik / Manuel';
+        document.getElementById('statSchedulerSub').textContent = 'Üst bardan Tam Otomatik modu açabilirsiniz';
+      }
+
+      renderNewsGrid(data.items);
+      renderSources(data.sources);
+      populateSettingsForm(data.settings);
+      renderLogs(data.logs);
+    }
+
+    function renderNewsGrid(items) {
+      const grid = document.getElementById('newsGrid');
+      if (!items.length) {
+        grid.innerHTML = `
+          <div class="col-span-full glass rounded-2xl p-12 text-center space-y-3">
+            <div class="text-base font-bold text-white">Henüz bu filtrede haber bulunmuyor</div>
+            <p class="text-xs text-slate-400">Sağ üstteki "Şimdi Haberleri Çek & Görselleştir" butonuna tıklayarak güncel teknoloji haberlerini çekebilirsiniz.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = items.map(item => {
+        const statusBadges = {
+          pending: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">Bekliyor</span>',
+          ready: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">Görseli Hazır</span>',
+          published: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">Paylaşıldı ✓</span>',
+          failed: '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-300 border border-rose-500/30">Hata</span>'
+        };
+
+        const previewImg = item.generated_image_path || item.image_url || '';
+        const displayTitle = item.tr_headline || item.original_title;
+
+        return `
+          <div class="glass rounded-2xl overflow-hidden flex flex-col justify-between card-hover">
+            <div>
+              <div class="aspect-[4/4] bg-slate-900 relative overflow-hidden">
+                ${previewImg
+                  ? `<img src="${previewImg}" class="w-full h-full object-cover" loading="lazy" />`
+                  : `<div class="w-full h-full flex items-center justify-center text-xs text-slate-500">Görsel Üretilmeye Hazır</div>`
+                }
+                <div class="absolute top-3 left-3 flex items-center gap-1.5">
+                  <span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-slate-950/85 text-white border border-white/10">${item.source_name}</span>
+                  ${item.tr_category_badge ? `<span class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-cyan-500 text-slate-950">${item.tr_category_badge}</span>` : ''}
+                </div>
+                <div class="absolute top-3 right-3">
+                  ${statusBadges[item.status] || ''}
+                </div>
+              </div>
+              <div class="p-4 space-y-2">
+                <h3 class="text-sm font-bold text-white line-clamp-2 leading-snug">${displayTitle}</h3>
+                <p class="text-xs text-slate-400 line-clamp-2">${item.tr_subheadline || item.original_summary || ''}</p>
+              </div>
+            </div>
+
+            <div class="p-4 pt-0 flex items-center gap-2">
+              ${item.generated_image_path ? `
+                <button onclick="openStudioModal(${item.id})" class="flex-1 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition">
+                  🎨 Önizle & Düzenle
+                </button>
+                <button onclick="publishSingleItem(${item.id}, this)" class="px-3 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition" title="Instagram'da Paylaş">
+                  📸 Paylaş
+                </button>
+              ` : `
+                <button onclick="prepareSingleItem(${item.id}, this)" class="flex-1 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-slate-950 text-xs font-bold transition">
+                  ⚡ AI + Instagram Görseli Üret
+                </button>
+              `}
+              <button onclick="deleteNewsItem(${item.id})" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs transition" title="Sil">
+                🗑
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function fetchLatestNews() {
+      const btn = document.getElementById('fetchBtn');
+      const spin = document.getElementById('fetchSpinner');
+      btn.disabled = true;
+      spin.classList.remove('hidden');
+      showToast('Haber kaynakları taranıyor ve ilk görseller hazırlanıyor...');
+      try {
+        const res = await fetch('/api/fetch?auto_prepare_count=3', { method: 'POST' });
+        const data = await res.json();
+        showToast(data.message || 'Haberler güncellendi!');
+        await loadDashboard();
+      } catch (e) {
+        showToast('Haber çekilirken hata oluştu.');
+      } finally {
+        btn.disabled = false;
+        spin.classList.add('hidden');
+      }
+    }
+
+    async function prepareSingleItem(id, btnEl) {
+      const origText = btnEl.innerHTML;
+      btnEl.disabled = true;
+      btnEl.innerHTML = '⏳ Hazırlanıyor...';
+      try {
+        const res = await fetch(`/api/news/${id}/prepare`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok) {
+          showToast('Instagram görseli ve Türkçe açıklama hazırlandı!');
+          await loadDashboard();
+          openStudioModal(id);
+        } else {
+          showToast('Hata: ' + (data.detail || data.message));
+        }
+      } finally {
+        btnEl.disabled = false;
+        btnEl.innerHTML = origText;
+      }
+    }
+
+    let currentPreviewMode = 'post';
+
+    function switchStudioPreview(mode) {
+      currentPreviewMode = mode;
+      const id = parseInt(document.getElementById('studioItemId').value);
+      const item = currentData.items.find(x => x.id === id);
+      if (!item) return;
+
+      const box = document.getElementById('studioPreviewBox');
+      const btnPost = document.getElementById('prevBtnPost');
+      const btnStory = document.getElementById('prevBtnStory');
+
+      if (mode === 'story') {
+        box.className = 'w-full max-w-[300px] aspect-[9/16] rounded-2xl overflow-hidden bg-slate-900 border border-cyan-500/40 shadow-2xl flex items-center justify-center relative';
+        btnStory.className = 'flex-1 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition';
+        btnPost.className = 'flex-1 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:text-white transition';
+        const storyUrl = item.generated_story_path || `/generated/story_${item.id}.jpg`;
+        document.getElementById('studioPreviewImg').src = storyUrl;
+        document.getElementById('studioDownloadBtn').href = storyUrl.split('?')[0];
+      } else {
+        box.className = 'w-full max-w-[360px] aspect-[4/5] rounded-2xl overflow-hidden bg-slate-900 border border-slate-800 shadow-2xl flex items-center justify-center relative';
+        btnPost.className = 'flex-1 py-1.5 rounded-xl text-xs font-bold bg-cyan-500 text-slate-950 transition';
+        btnStory.className = 'flex-1 py-1.5 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 hover:text-white transition';
+        const postUrl = item.generated_image_path || item.image_url || '';
+        document.getElementById('studioPreviewImg').src = postUrl;
+        document.getElementById('studioDownloadBtn').href = postUrl.split('?')[0];
+      }
+    }
+
+    function openStudioModal(id) {
+      const item = currentData.items.find(x => x.id === id);
+      if (!item) return;
+      document.getElementById('studioItemId').value = item.id;
+      document.getElementById('studioBadge').value = item.tr_category_badge || 'TEKNOLOJİ';
+      document.getElementById('studioHeadline').value = item.tr_headline || item.original_title || '';
+      document.getElementById('studioSubheadline').value = item.tr_subheadline || '';
+      document.getElementById('studioImageUrl').value = item.image_url || '';
+      document.getElementById('studioCaption').value = item.tr_caption || '';
+      document.getElementById('studioTemplate').value = currentData.settings.template_style || 'modern_gradient';
+      document.getElementById('studioAccent').value = currentData.settings.accent_color || '#00E5FF';
+      switchStudioPreview('post');
+      document.getElementById('studioModal').classList.remove('hidden');
+    }
+
+    function closeStudioModal() {
+      document.getElementById('studioModal').classList.add('hidden');
+    }
+
+    async function rerenderStudioItem() {
+      const id = parseInt(document.getElementById('studioItemId').value);
+      const btn = document.getElementById('rerenderBtn');
+      btn.textContent = '⏳ Görsel Yenileniyor...';
+      const payload = {
+        tr_category_badge: document.getElementById('studioBadge').value,
+        tr_headline: document.getElementById('studioHeadline').value,
+        tr_subheadline: document.getElementById('studioSubheadline').value,
+        tr_caption: document.getElementById('studioCaption').value,
+        image_url: document.getElementById('studioImageUrl').value,
+        template_style: document.getElementById('studioTemplate').value,
+        accent_color: document.getElementById('studioAccent').value
+      };
+      const res = await fetch(`/api/news/${id}/custom-render`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      btn.textContent = '🔄 Görseli & Metni Güncelle';
+      if (data.ok) {
+        await loadDashboard();
+        switchStudioPreview(currentPreviewMode);
+        showToast('Post ve Story tasarımları güncellendi!');
+      }
+    }
+
+    async function publishStoryFromStudio(btnEl) {
+      const id = document.getElementById('studioItemId').value;
+      const btn = btnEl || document.getElementById('publishStoryBtn');
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Story Yükleniyor...';
+      }
+      showToast("Instagram Story + Kaynak Linki yükleniyor, lütfen bekleyin...", 30000);
+      try {
+        const res = await fetch(`/api/news/${id}/publish-story`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showToast('🎉 Story ve tıklanabilir kaynak linki başarıyla paylaşıldı!', 7000);
+          loadDashboard();
+        } else {
+          showToast('⚠️ ' + (data.detail || data.message || 'Story paylaşım hatası'), 9000);
+        }
+      } catch (err) {
+        showToast('⚠️ Sunucuya ulaşılamadı. Lütfen baslat.bat dosyasının açık olduğundan emin olun.', 9000);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
+    }
+
+    async function regenerateAIInStudio() {
+      const id = parseInt(document.getElementById('studioItemId').value);
+      const btn = document.getElementById('aiRegenBtn');
+      btn.textContent = '⏳ Haberin tam metni okunuyor & AI yazıyor...';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`/api/news/${id}/prepare`, { method: 'POST' });
+        const data = await res.json();
+        if (data.ok && data.item) {
+          await loadDashboard();
+          openStudioModal(id);
+          showToast('✨ Haberin tam metni taranarak detaylı açıklama yazıldı!');
+        }
+      } finally {
+        btn.textContent = '✨ AI İle Detaylı Yeniden Yaz';
+        btn.disabled = false;
+      }
+    }
+
+    async function publishFromStudio() {
+      const id = document.getElementById('studioItemId').value;
+      const btn = document.getElementById('publishStudioBtn');
+      await publishSingleItem(id, btn);
+    }
+
+    async function publishSingleItem(id, btnEl) {
+      const origText = btnEl ? btnEl.innerHTML : '';
+      if (btnEl) {
+        btnEl.disabled = true;
+        btnEl.innerHTML = "⏳ Instagram'a Yükleniyor...";
+      }
+      showToast("⏳ Instagram'a (Post + Story) yükleniyor, bu işlem 10-15 saniye sürebilir...", 40000);
+      try {
+        const res = await fetch(`/api/news/${id}/publish`, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          showToast('🎉 ' + (data.message || 'Gönderi Instagram hesabınızda başarıyla paylaşıldı!'), 8000);
+          closeStudioModal();
+          loadDashboard();
+        } else {
+          showToast('⚠️ ' + (data.detail || data.message || 'Paylaşım hatası'), 10000);
+        }
+      } catch (err) {
+        showToast('⚠️ Sunucu bağlantısı kesildi. Lütfen sayfayı yenileyip tekrar deneyin.', 9000);
+      } finally {
+        if (btnEl) {
+          btnEl.disabled = false;
+          btnEl.innerHTML = origText;
+        }
+      }
+    }
+
+    async function deleteNewsItem(id) {
+      await fetch(`/api/news/${id}`, { method: 'DELETE' });
+      loadDashboard();
+    }
+
+    function openManualModal() {
+      document.getElementById('manualModal').classList.remove('hidden');
+    }
+    function closeManualModal() {
+      document.getElementById('manualModal').classList.add('hidden');
+    }
+
+    async function submitManualNews() {
+      const title = document.getElementById('manTitle').value.trim();
+      if (!title) return showToast('Lütfen bir haber başlığı girin.');
+      const res = await fetch('/api/news/manual', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          summary: document.getElementById('manSummary').value,
+          image_url: document.getElementById('manImage').value
+        })
+      });
+      const data = await res.json();
+      closeManualModal();
+      await loadDashboard();
+      if (data.ok && data.item) {
+        openStudioModal(data.item.id);
+      }
+    }
+
+    function renderSources(sources) {
+      const el = document.getElementById('sourcesList');
+      const catNames = { yabanci: '🌍 Yabancı', yerli: '🇹🇷 Yerli', sosyal: '🔥 Reddit/Sosyal' };
+      el.innerHTML = sources.map(s => `
+        <div class="py-3 flex items-center justify-between gap-4">
+          <div>
+            <div class="text-xs font-bold text-white flex items-center gap-2">
+              <span>${s.name}</span>
+              <span class="px-2 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300">${catNames[s.category] || s.category}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 truncate max-w-xl">${s.url}</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <label class="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+              <input type="checkbox" ${s.enabled ? 'checked' : ''} onchange="toggleSource(${s.id}, this.checked)" class="accent-cyan-400" />
+              <span>Aktif</span>
+            </label>
+            <button onclick="deleteSource(${s.id})" class="text-xs text-rose-400 hover:underline">Sil</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function toggleSource(id, enabled) {
+      await fetch(`/api/sources/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+      showToast('Kaynak durumu güncellendi.');
+    }
+
+    async function addNewSource() {
+      const name = document.getElementById('newSrcName').value.trim();
+      const category = document.getElementById('newSrcCategory').value;
+      const url = document.getElementById('newSrcUrl').value.trim();
+      if (!name || !url) return showToast('Kaynak adı ve URL zorunludur.');
+      const source_type = url.includes('reddit.com') ? 'reddit' : 'rss';
+      await fetch('/api/sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, category, source_type, url })
+      });
+      document.getElementById('newSrcName').value = '';
+      document.getElementById('newSrcUrl').value = '';
+      showToast('Yeni haber kaynağı eklendi!');
+      loadDashboard();
+    }
+
+    async function deleteSource(id) {
+      await fetch(`/api/sources/${id}`, { method: 'DELETE' });
+      loadDashboard();
+    }
+
+    function populateSettingsForm(s) {
+      const fields = [
+        'brand_name', 'brand_handle', 'brand_footer_text', 'template_style',
+        'accent_color', 'gemini_api_key', 'gemini_model', 'ai_tone',
+        'custom_hashtags', 'ig_username', 'ig_password', 'ig_verification_code',
+        'fetch_interval_minutes', 'post_interval_minutes', 'max_posts_per_day'
+      ];
+      fields.forEach(k => {
+        const el = document.getElementById('set_' + k);
+        if (el && document.activeElement !== el) {
+          el.value = s[k] !== undefined ? s[k] : '';
+        }
+      });
+      const apCheck = document.getElementById('set_auto_pilot_enabled');
+      if (apCheck) apCheck.checked = !!s.auto_pilot_enabled;
+    }
+
+    async function saveAllSettings(testIg = false) {
+      const payload = {
+        brand_name: document.getElementById('set_brand_name').value,
+        brand_handle: document.getElementById('set_brand_handle').value,
+        brand_footer_text: document.getElementById('set_brand_footer_text').value,
+        template_style: document.getElementById('set_template_style').value,
+        accent_color: document.getElementById('set_accent_color').value,
+        gemini_api_key: document.getElementById('set_gemini_api_key').value,
+        gemini_model: document.getElementById('set_gemini_model').value,
+        ai_tone: document.getElementById('set_ai_tone').value,
+        custom_hashtags: document.getElementById('set_custom_hashtags').value,
+        ig_username: document.getElementById('set_ig_username').value,
+        ig_password: document.getElementById('set_ig_password').value,
+        ig_verification_code: document.getElementById('set_ig_verification_code').value,
+        auto_pilot_enabled: document.getElementById('set_auto_pilot_enabled').checked,
+        fetch_interval_minutes: parseInt(document.getElementById('set_fetch_interval_minutes').value || '45'),
+        post_interval_minutes: parseInt(document.getElementById('set_post_interval_minutes').value || '180'),
+        max_posts_per_day: parseInt(document.getElementById('set_max_posts_per_day').value || '6'),
+      };
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      showToast('Ayarlar başarıyla kaydedildi!');
+      if (testIg) {
+        const statusEl = document.getElementById('igTestStatus');
+        statusEl.textContent = '⏳ Instagram girişi test ediliyor...';
+        const res = await fetch('/api/instagram/test', { method: 'POST' });
+        const d = await res.json();
+        statusEl.textContent = d.message;
+        statusEl.className = d.ok ? 'text-xs text-emerald-400 font-semibold' : 'text-xs text-rose-400 font-semibold';
+      }
+      loadDashboard();
+    }
+
+    async function toggleAutoPilotQuick() {
+      const nextState = !currentData.settings.auto_pilot_enabled;
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auto_pilot_enabled: nextState })
+      });
+      showToast(nextState ? '🚀 Tam Otomatik Mod AKTİF edildi!' : 'Tam Otomatik Mod duraklatıldı.');
+      loadDashboard();
+    }
+
+    async function copyCloudSessionJson() {
+      const res = await fetch('/api/instagram/session-export');
+      const d = await res.json();
+      if (d.ok && d.session_json) {
+        await navigator.clipboard.writeText(d.session_json);
+        showToast('📋 Instagram oturum anahtarı kopyalandı! Bulut sunucunuzda IG_SESSION_JSON değişkenine yapıştırabilirsiniz.');
+      } else {
+        showToast('⚠️ ' + (d.message || 'Oturum anahtarı alınamadı.'));
+      }
+    }
+
+    async function checkAuthAndLoad() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const st = await res.json();
+        if (st.auth_required && !st.authenticated) {
+          document.getElementById('loginModal').classList.remove('hidden');
+          return;
+        }
+        document.getElementById('loginModal').classList.add('hidden');
+        await loadDashboard();
+      } catch (e) {}
+    }
+
+    async function submitAdminLogin() {
+      const pw = document.getElementById('adminPwInput').value;
+      const errEl = document.getElementById('loginErrorText');
+      errEl.textContent = '';
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      });
+      const d = await res.json();
+      if (res.ok && d.ok) {
+        document.getElementById('loginModal').classList.add('hidden');
+        showToast('🔓 Yönetici girişi başarılı!');
+        await loadDashboard();
+      } else {
+        errEl.textContent = d.detail || 'Şifre hatalı!';
+      }
+    }
+
+    function renderLogs(logs) {
+      const c = document.getElementById('logsContainer');
+      const colors = { INFO: 'text-cyan-400', SUCCESS: 'text-emerald-400', WARN: 'text-amber-400', ERROR: 'text-rose-400' };
+      c.innerHTML = logs.map(l => `
+        <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800/80 flex items-start gap-3">
+          <span class="text-slate-500 shrink-0">${l.created_at}</span>
+          <span class="font-bold shrink-0 ${colors[l.level] || 'text-slate-300'}">[${l.level}]</span>
+          <span class="text-slate-200">${l.message}</span>
+        </div>
+      `).join('');
+    }
+
+    checkAuthAndLoad();
+    setInterval(checkAuthAndLoad, 25000);
+  </script>
+
+  <!-- YÖNETİCİ ŞİFRE KİLİT EKRANI (Web/Bulut Güvenliği İçin) -->
+  <div id="loginModal" class="fixed inset-0 z-50 hidden bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass rounded-2xl max-w-sm w-full border border-cyan-500/30 p-6 space-y-4 text-center">
+      <div class="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center mx-auto text-2xl">
+        🔒
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-white">SİBER KAPSÜL Yönetim Paneli</h3>
+        <p class="text-xs text-slate-400 mt-1">Devam etmek için yönetici şifrenizi (ADMIN_PASSWORD) girin.</p>
+      </div>
+      <input id="adminPwInput" type="password" onkeydown="if(event.key==='Enter') submitAdminLogin()" placeholder="Yönetici Şifresi" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white text-center focus:outline-none focus:border-cyan-400" />
+      <div id="loginErrorText" class="text-xs text-rose-400 font-semibold"></div>
+      <button onclick="submitAdminLogin()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 text-slate-950 font-extrabold text-xs transition">
+        Giriş Yap
+      </button>
+    </div>
+  </div>
+</body>
+</html>

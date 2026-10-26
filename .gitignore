@@ -1,0 +1,22 @@
+# Hassas Veriler ve Ortam Değişkenleri (ASLA GITHUB'A YÜKLENMEZ)
+.env
+.env.*
+!.env.example
+
+# Veritabanı ve Instagram Oturum Dosyaları (ASLA GITHUB'A YÜKLENMEZ)
+data/*.db
+data/*.db-journal
+data/*.sqlite
+data/ig_session.json
+data/generated/post_*.jpg
+data/generated/story_*.jpg
+
+# Python Sanal Ortam ve Önbellek
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*.log
+.DS_Store
+Thumbs.db

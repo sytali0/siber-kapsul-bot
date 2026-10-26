@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: siber-kapsul-bot
+    env: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: IG_USERNAME
+        value: siberkapsul
+      - key: IG_PASSWORD
+        sync: false
+      - key: IG_SESSION_JSON
+        sync: false
